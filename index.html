@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>مدیریت تجهیزات هوشمند مدارس</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-light: #3b82f6;
+      --bg-color: #f1f5f9;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      
+      --status-healthy: #10b981;
+      --status-repair: #f59e0b;
+      --status-broken: #ef4444;
+      
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    /* Mobile Container App Simulation */
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      background-color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary), #1e40af);
+      color: white;
+      padding: 20px 16px;
+      text-align: center;
+      border-bottom-left-radius: 16px;
+      border-bottom-right-radius: 16px;
+      box-shadow: 0 4px 10px rgba(30, 58, 138, 0.2);
+    }
+
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    header p {
+      font-size: 0.8rem;
+      opacity: 0.85;
+    }
+
+    main {
+      padding: 16px;
+      flex: 1;
+    }
+
+    .view {
+      display: none;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards & Forms */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-main);
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      outline: none;
+      background-color: #f8fafc;
+      transition: all 0.2s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary-light);
+      background-color: #fff;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .btn-secondary {
+      background-color: #e2e8f0;
+      color: var(--text-main);
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+    }
+
+    /* Dashboard Layout */
+    .school-info-bar {
+      background: #eff6ff;
+      border-right: 4px solid var(--primary-light);
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .school-info-bar div h2 {
+      font-size: 1rem;
+      color: var(--primary);
+    }
+
+    .school-info-bar div p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Item Card Component */
+    .item-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow);
+    }
+
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .item-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-badge {
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .status-healthy { background: #d1fae5; color: #065f46; }
+    .status-repair { background: #fef3c7; color: #92400e; }
+    .status-broken { background: #fee2e2; color: #991b1b; }
+
+    .item-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      background: #f8fafc;
+      padding: 10px;
+      border-radius: 6px;
+    }
+
+    .item-body span strong {
+      color: var(--text-main);
+    }
+
+    .edit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .edit-grid input {
+      padding: 6px 8px;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    .edit-grid label {
+      font-size: 0.75rem;
+      text-align: center;
+      margin-bottom: 2px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 12px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border-color);
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <header>
+    <h1>مدیریت کالاهای هوشمند</h1>
+    <p>سامانه جامع ثبت و نظارت تجهیزات مدارس</p>
+  </header>
+
+  <main>
+    <!-- VIEW 1: LOGIN -->
+    <section id="view-login" class="view active">
+      <div class="card">
+        <div class="card-title">ورود مدیران</div>
+        <form id="form-login">
+          <div class="form-group">
+            <label for="login-code">کد واحد آموزشی (کد مدرسه):</label>
+            <input type="number" id="login-code" placeholder="مثلاً: ۱۲۳۴۵۶" required>
+          </div>
+          <button type="submit" class="btn btn-primary">ورود به سامانه</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- VIEW 2: INITIAL REGISTER -->
+    <section id="view-register" class="view">
+      <div class="card">
+        <div class="card-title">ثبت اولیه اطلاعات مدرسه</div>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">اطلاعات این کد مدرسه یافت نشد. لطفاً مشخصات را برای بار اول تکمیل کنید.</p>
+        
+        <form id="form-register">
+          <div class="form-group">
+            <label>نام مدرسه:</label>
+            <input type="text" id="reg-school-name" required placeholder="مثلاً: دبیرستان شهید بهشتی">
+          </div>
+          <div class="form-group">
+            <label>نام و نام خانوادگی مدیر:</label>
+            <input type="text" id="reg-manager-name" required placeholder="مثلاً: علی محمدی">
+          </div>
+
+          <hr style="border:0; border-top:1px solid var(--border-color); margin:16px 0;">
+          <div class="card-title" style="font-size:0.9rem;">تعیین آمار اولیه تجهیزات</div>
+
+          <div id="initial-items-container">
+            <!-- Dynamic Content generated via JS -->
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top: 12px;">ثبت نهایی و ورود</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- VIEW 3: DASHBOARD -->
+    <section id="view-dashboard" class="view">
+      <div class="school-info-bar">
+        <div>
+          <h2 id="dash-school-name">---</h2>
+          <p>مدیر: <span id="dash-manager-name">---</span> | کد: <span id="dash-school-code">---</span></p>
+        </div>
+        <button id="btn-logout" class="btn btn-outline" style="width:auto; padding:6px 12px; font-size:0.75rem;">خروج</button>
+      </div>
+
+      <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>لیست کالاها و وضعیت</span>
+        <button id="btn-toggle-edit" class="btn btn-secondary" style="width:auto; padding:6px 12px; font-size:0.8rem;">ویرایش آمار</button>
+      </div>
+
+      <div id="dashboard-items-container">
+        <!-- Item Cards generated via JS -->
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    سامانه هوشمند تجهیزات مدارس کشور
+  </footer>
+</div>
+
+<script>
+  // Global Hardware Categories
+  const HARDWARE_TYPES = [
+    { id: 'monitor', title: 'مانیتور', icon: '🖥️' },
+    { id: 'case', title: 'کیس کامپیوتر', icon: '🖥️' },
+    { id: 'projector', title: 'ویدیو پروژکتور', icon: '📹' },
+    { id: 'laptop', title: 'لپ‌تاپ', icon: '💻' },
+    { id: 'tv', title: 'تلویزیون', icon: '📺' }
+  ];
+
+  let currentCode = null;
+  let isEditMode = false;
+
+  // LocalStorage Helper
+  const DB = {
+    getSchool: (code) => {
+      const data = localStorage.getItem(`school_${code}`);
+      return data ? JSON.parse(data) : null;
+    },
+    saveSchool: (code, schoolData) => {
+      localStorage.setItem(`school_${code}`, JSON.stringify(schoolData));
+    }
+  };
+
+  // UI Navigation Helper
+  function showView(viewId) {
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    document.getElementById(viewId).classList.add('active');
+  }
+
+  // Generate Initial Form Registration Fields
+  function renderRegisterForm() {
+    const container = document.getElementById('initial-items-container');
+    container.innerHTML = '';
+
+    HARDWARE_TYPES.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'item-card';
+      div.style.padding = '10px';
+      div.style.marginBottom = '8px';
+      
+      div.innerHTML = `
+        <div style="font-weight:600; font-size:0.85rem; margin-bottom:6px;">${item.icon} ${item.title}</div>
+        <div class="edit-grid">
+          <div>
+            <label>سالم</label>
+            <input type="number" min="0" value="0" data-item="${item.id}" data-type="healthy" required>
+          </div>
+          <div>
+            <label>نیازمند تعمیر</label>
+            <input type="number" min="0" value="0" data-item="${item.id}" data-type="repair" required>
+          </div>
+          <div>
+            <label>اسقاطی</label>
+            <input type="number" min="0" value="0" data-item="${item.id}" data-type="broken" required>
+          </div>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  // Handle Login Event
+  document.getElementById('form-login').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const codeInput = document.getElementById('login-code').value.trim();
+    if (!codeInput) return;
+
+    currentCode = codeInput;
+    const school = DB.getSchool(currentCode);
+
+    if (school) {
+      loadDashboard();
+    } else {
+      renderRegisterForm();
+      showView('view-register');
+    }
+  });
+
+  // Handle Registration Event
+  document.getElementById('form-register').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const itemsData = {};
+    HARDWARE_TYPES.forEach(item => {
+      const healthy = parseInt(document.querySelector(`input[data-item="${item.id}"][data-type="healthy"]`).value) || 0;
+      const repair = parseInt(document.querySelector(`input[data-item="${item.id}"][data-type="repair"]`).value) || 0;
+      const broken = parseInt(document.querySelector(`input[data-item="${item.id}"][data-type="broken"]`).value) || 0;
+
+      itemsData[item.id] = { healthy, repair, broken };
+    });
+
+    const newSchool = {
+      code: currentCode,
+      name: document.getElementById('reg-school-name').value.trim(),
+      manager: document.getElementById('reg-manager-name').value.trim(),
+      items: itemsData
+    };
+
+    DB.saveSchool(currentCode, newSchool);
+    loadDashboard();
+  });
+
+  // Render Dashboard
+  function loadDashboard() {
+    const school = DB.getSchool(currentCode);
+    if (!school) return;
+
+    document.getElementById('dash-school-name').innerText = school.name;
+    document.getElementById('dash-manager-name').innerText = school.manager;
+    document.getElementById('dash-school-code').innerText = school.code;
+
+    renderDashboardItems();
+    showView('view-dashboard');
+  }
+
+  function renderDashboardItems() {
+    const school = DB.getSchool(currentCode);
+    const container = document.getElementById('dashboard-items-container');
+    container.innerHTML = '';
+
+    HARDWARE_TYPES.forEach(hw => {
+      const data = school.items[hw.id] || { healthy: 0, repair: 0, broken: 0 };
+      const total = data.healthy + data.repair + data.broken;
+
+      const card = document.createElement('div');
+      card.className = 'item-card';
+
+      if (!isEditMode) {
+        card.innerHTML = `
+          <div class="item-header">
+            <span class="item-title">${hw.icon} ${hw.title}</span>
+            <span class="status-badge status-healthy">کل: ${total} عدد</span>
+          </div>
+          <div class="item-body">
+            <span>سالم: <strong>${data.healthy}</strong></span>
+            <span>نیازمند تعمیر: <strong>${data.repair}</strong></span>
+            <span>اسقاطی: <strong>${data.broken}</strong></span>
+          </div>
+        `;
+      } else {
+        card.innerHTML = `
+          <div class="item-header">
+            <span class="item-title">${hw.icon} ${hw.title}</span>
+          </div>
+          <div class="edit-grid">
+            <div>
+              <label>سالم</label>
+              <input type="number" min="0" value="${data.healthy}" data-edit-item="${hw.id}" data-edit-type="healthy">
+            </div>
+            <div>
+              <label>تعمیری</label>
+              <input type="number" min="0" value="${data.repair}" data-edit-item="${hw.id}" data-edit-type="repair">
+            </div>
+            <div>
+              <label>اسقاطی</label>
+              <input type="number" min="0" value="${data.broken}" data-edit-item="${hw.id}" data-edit-type="broken">
+            </div>
+          </div>
+        `;
+      }
+
+      container.appendChild(card);
+    });
+  }
+
+  // Toggle Edit Mode & Save Changes
+  document.getElementById('btn-toggle-edit').addEventListener('click', function() {
+    const school = DB.getSchool(currentCode);
+    
+    if (isEditMode) {
+      // Save changes
+      HARDWARE_TYPES.forEach(hw => {
+        const healthy = parseInt(document.querySelector(`input[data-edit-item="${hw.id}"][data-edit-type="healthy"]`).value) || 0;
+        const repair = parseInt(document.querySelector(`input[data-edit-item="${hw.id}"][data-edit-type="repair"]`).value) || 0;
+        const broken = parseInt(document.querySelector(`input[data-edit-item="${hw.id}"][data-edit-type="broken"]`).value) || 0;
+
+        school.items[hw.id] = { healthy, repair, broken };
+      });
+
+      DB.saveSchool(currentCode, school);
+      this.innerText = 'ویرایش آمار';
+      this.className = 'btn btn-secondary';
+      isEditMode = false;
+    } else {
+      // Enter Edit mode
+      this.innerText = 'ذخیره تغییرات';
+      this.className = 'btn btn-primary';
+      isEditMode = true;
+    }
+
+    renderDashboardItems();
+  });
+
+  // Logout Event
+  document.getElementById('btn-logout').addEventListener('click', function() {
+    currentCode = null;
+    isEditMode = false;
+    document.getElementById('login-code').value = '';
+    document.getElementById('btn-toggle-edit').innerText = 'ویرایش آمار';
+    document.getElementById('btn-toggle-edit').className = 'btn btn-secondary';
+    showView('view-login');
+  });
+</script>
+</body>
+</html>
