@@ -2,562 +2,639 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>مدیریت تجهیزات هوشمند مدارس</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سامانه پیشرفته مدیریت تجهیزات هوشمند مدارس</title>
+  <!-- Crypto-JS for AES Encryption -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <style>
     :root {
-      --primary: #1e3a8a;
-      --primary-light: #3b82f6;
-      --bg-color: #f1f5f9;
-      --card-bg: #ffffff;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --border-color: #e2e8f0;
-      
-      --status-healthy: #10b981;
-      --status-repair: #f59e0b;
-      --status-broken: #ef4444;
-      
-      --radius: 12px;
-      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      --primary: #0f172a;
+      --accent: #2563eb;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --border: #e2e8f0;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
     }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 20px; }
+    .container { max-width: 500px; margin: 0 auto; padding: 12px; }
+    header { background: var(--primary); color: white; padding: 16px; text-align: center; border-radius: 0 0 16px 16px; margin-bottom: 16px; }
+    header h1 { font-size: 1.1rem; }
+    header p { font-size: 0.75rem; opacity: 0.8; margin-top: 4px; }
+    
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .card-title { font-size: 0.95rem; font-weight: bold; margin-bottom: 12px; color: var(--primary); display: flex; justify-content: space-between; align-items: center; }
+    
+    .form-group { margin-bottom: 10px; }
+    label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; }
+    input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; background: #fff; }
+    
+    .btn { border: none; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; width: 100%; transition: 0.2s; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-group { display: flex; gap: 8px; margin-top: 8px; }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
+    .badge { font-size: 0.7rem; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
+    .badge-healthy { background: #d1fae5; color: #065f46; }
+    .badge-repair { background: #fef3c7; color: #92400e; }
+    .badge-pending { background: #e0e7ff; color: #3730a3; }
 
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      display: flex;
-      justify-content: center;
-      min-height: 100vh;
-    }
-
-    /* Mobile Container App Simulation */
-    .app-container {
-      width: 100%;
-      max-width: 480px;
-      background-color: #f8fafc;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
-    }
-
-    header {
-      background: linear-gradient(135deg, var(--primary), #1e40af);
-      color: white;
-      padding: 20px 16px;
-      text-align: center;
-      border-bottom-left-radius: 16px;
-      border-bottom-right-radius: 16px;
-      box-shadow: 0 4px 10px rgba(30, 58, 138, 0.2);
-    }
-
-    header h1 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    header p {
-      font-size: 0.8rem;
-      opacity: 0.85;
-    }
-
-    main {
-      padding: 16px;
-      flex: 1;
-    }
-
-    .view {
-      display: none;
-      animation: fadeIn 0.3s ease-in-out;
-    }
-
-    .view.active {
-      display: block;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Cards & Forms */
-    .card {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 16px;
-      border: 1px solid var(--border-color);
-      box-shadow: var(--shadow);
-    }
-
-    .card-title {
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 12px;
-      color: var(--primary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .form-group {
-      margin-bottom: 14px;
-    }
-
-    label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: var(--text-main);
-    }
-
-    input[type="text"],
-    input[type="number"],
-    select {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      font-size: 0.95rem;
-      outline: none;
-      background-color: #f8fafc;
-      transition: all 0.2s;
-    }
-
-    input:focus, select:focus {
-      border-color: var(--primary-light);
-      background-color: #fff;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-    }
-
-    .btn {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .btn:active {
-      transform: scale(0.98);
-    }
-
-    .btn-primary {
-      background-color: var(--primary);
-      color: white;
-    }
-
-    .btn-secondary {
-      background-color: #e2e8f0;
-      color: var(--text-main);
-    }
-
-    .btn-outline {
-      background-color: transparent;
-      border: 1px solid var(--border-color);
-      color: var(--text-muted);
-    }
-
-    /* Dashboard Layout */
-    .school-info-bar {
-      background: #eff6ff;
-      border-right: 4px solid var(--primary-light);
-      padding: 12px 16px;
-      border-radius: 8px;
-      margin-bottom: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .school-info-bar div h2 {
-      font-size: 1rem;
-      color: var(--primary);
-    }
-
-    .school-info-bar div p {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    /* Item Card Component */
-    .item-card {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 14px;
-      margin-bottom: 12px;
-      border: 1px solid var(--border-color);
-      box-shadow: var(--shadow);
-    }
-
-    .item-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .item-title {
-      font-weight: 700;
-      font-size: 0.95rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .status-badge {
-      font-size: 0.75rem;
-      padding: 4px 8px;
-      border-radius: 20px;
-      font-weight: 600;
-    }
-
-    .status-healthy { background: #d1fae5; color: #065f46; }
-    .status-repair { background: #fef3c7; color: #92400e; }
-    .status-broken { background: #fee2e2; color: #991b1b; }
-
-    .item-body {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      background: #f8fafc;
-      padding: 10px;
-      border-radius: 6px;
-    }
-
-    .item-body span strong {
-      color: var(--text-main);
-    }
-
-    .edit-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .edit-grid input {
-      padding: 6px 8px;
-      font-size: 0.85rem;
-      text-align: center;
-    }
-
-    .edit-grid label {
-      font-size: 0.75rem;
-      text-align: center;
-      margin-bottom: 2px;
-    }
-
-    footer {
-      text-align: center;
-      padding: 12px;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      border-top: 1px solid var(--border-color);
-      background: #fff;
-    }
+    .notification { background: #eff6ff; border-right: 4px solid var(--accent); padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 0.82rem; }
+    .hidden { display: none !important; }
+    
+    .item-row { border-bottom: 1px solid var(--border); padding: 10px 0; }
+    .item-row:last-child { border-bottom: none; }
+    
+    .modal { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+    .modal-content { background: white; padding: 16px; border-radius: 12px; width: 100%; max-width: 400px; }
   </style>
 </head>
 <body>
 
-<div class="app-container">
-  <header>
-    <h1>مدیریت کالاهای هوشمند</h1>
-    <p>سامانه جامع ثبت و نظارت تجهیزات مدارس</p>
-  </header>
+<header>
+  <h1 id="app-header-title">سامانه هوشمند اموال مدارس</h1>
+  <p id="app-header-sub">سیستم یکپارچه نظارت و انبارداری</p>
+</header>
 
-  <main>
-    <!-- VIEW 1: LOGIN -->
-    <section id="view-login" class="view active">
-      <div class="card">
-        <div class="card-title">ورود مدیران</div>
-        <form id="form-login">
-          <div class="form-group">
-            <label for="login-code">کد واحد آموزشی (کد مدرسه):</label>
-            <input type="number" id="login-code" placeholder="مثلاً: ۱۲۳۴۵۶" required>
-          </div>
-          <button type="submit" class="btn btn-primary">ورود به سامانه</button>
-        </form>
+<div class="container">
+
+  <!-- LOGIN VIEW -->
+  <div id="view-login" class="card">
+    <div class="card-title">ورود به سامانه</div>
+    <form id="form-login">
+      <div class="form-group">
+        <label>نوع کاربر:</label>
+        <select id="login-role" onchange="toggleLoginInputs()">
+          <option value="school">مدیر مدرسه</option>
+          <option value="admin">امین اموال اداره</option>
+        </select>
       </div>
-    </section>
-
-    <!-- VIEW 2: INITIAL REGISTER -->
-    <section id="view-register" class="view">
-      <div class="card">
-        <div class="card-title">ثبت اولیه اطلاعات مدرسه</div>
-        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">اطلاعات این کد مدرسه یافت نشد. لطفاً مشخصات را برای بار اول تکمیل کنید.</p>
-        
-        <form id="form-register">
-          <div class="form-group">
-            <label>نام مدرسه:</label>
-            <input type="text" id="reg-school-name" required placeholder="مثلاً: دبیرستان شهید بهشتی">
-          </div>
-          <div class="form-group">
-            <label>نام و نام خانوادگی مدیر:</label>
-            <input type="text" id="reg-manager-name" required placeholder="مثلاً: علی محمدی">
-          </div>
-
-          <hr style="border:0; border-top:1px solid var(--border-color); margin:16px 0;">
-          <div class="card-title" style="font-size:0.9rem;">تعیین آمار اولیه تجهیزات</div>
-
-          <div id="initial-items-container">
-            <!-- Dynamic Content generated via JS -->
-          </div>
-
-          <button type="submit" class="btn btn-primary" style="margin-top: 12px;">ثبت نهایی و ورود</button>
-        </form>
+      <div class="form-group">
+        <label id="lbl-username">کد مدرسه:</label>
+        <input type="text" id="login-username" placeholder="مثلاً 1001" required>
       </div>
-    </section>
+      <div class="form-group">
+        <label>رمز عبور:</label>
+        <input type="password" id="login-password" placeholder="******" required>
+      </div>
+      <button type="submit" class="btn btn-primary">ورود به پنل</button>
+    </form>
+  </div>
 
-    <!-- VIEW 3: DASHBOARD -->
-    <section id="view-dashboard" class="view">
-      <div class="school-info-bar">
-        <div>
-          <h2 id="dash-school-name">---</h2>
-          <p>مدیر: <span id="dash-manager-name">---</span> | کد: <span id="dash-school-code">---</span></p>
-        </div>
-        <button id="btn-logout" class="btn btn-outline" style="width:auto; padding:6px 12px; font-size:0.75rem;">خروج</button>
+  <!-- SCHOOL DASHBOARD -->
+  <div id="view-school" class="hidden">
+    <div class="card" style="background:#f0f9ff;">
+      <div class="card-title">
+        <span id="school-title">مدرسه ...</span>
+        <button onclick="logout()" class="btn btn-outline" style="width:auto; padding:4px 8px; font-size:0.7rem;">خروج</button>
+      </div>
+      <p style="font-size:0.75rem; color:#0369a1;">کد واحد آموزشی: <span id="school-code-display"></span></p>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div id="school-notifications"></div>
+
+    <!-- ACTIONS -->
+    <button onclick="openAddModal()" class="btn btn-primary" style="margin-bottom: 12px;">+ ثبت کالای جدید</button>
+
+    <!-- ITEMS LIST -->
+    <div class="card">
+      <div class="card-title">کالاهای هوشمند مدرسه</div>
+      <div id="school-items-list"></div>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD -->
+  <div id="view-admin" class="hidden">
+    <div class="card" style="background:#fdf4ff;">
+      <div class="card-title">
+        <span>پنل امین اموال اداره</span>
+        <button onclick="logout()" class="btn btn-outline" style="width:auto; padding:4px 8px; font-size:0.7rem;">خروج</button>
+      </div>
+    </div>
+
+    <!-- ADMIN NOTIFICATIONS -->
+    <div id="admin-notifications"></div>
+
+    <button onclick="openAdminAddModal()" class="btn btn-primary" style="margin-bottom: 12px;">+ تخصیص کالای جدید به مدرسه</button>
+
+    <div class="card">
+      <div class="card-title">گزارش کل اموال مدارس</div>
+      <div id="admin-schools-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL: ADD ITEM (SCHOOL) -->
+<div id="modal-add" class="modal hidden">
+  <div class="modal-content">
+    <div class="card-title">افزودن کالای جدید</div>
+    <form id="form-add-item">
+      <div class="form-group">
+        <label>نوع کالا:</label>
+        <select id="add-type">
+          <option>مانیتور</option>
+          <option>کیس کامپیوتر</option>
+          <option>ویدیو پروژکتور</option>
+          <option>لپ‌تاپ</option>
+          <option>تلویزیون</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>مبدأ کالا (منبع تامین):</label>
+        <select id="add-source">
+          <option>خرید از سرانه مدرسه</option>
+          <option>اهدا توسط خیرین</option>
+          <option>استانداری</option>
+          <option>نوسازی مدارس</option>
+          <option>سایر</option>
+        </select>
+      </div>
+      <div class="btn-group">
+        <button type="submit" class="btn btn-primary">ثبت</button>
+        <button type="button" onclick="closeModals()" class="btn btn-outline">انصراف</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: CHANGE STATUS -->
+<div id="modal-status" class="modal hidden">
+  <div class="modal-content">
+    <div class="card-title">تغییر وضعیت سلامت</div>
+    <form id="form-change-status">
+      <input type="hidden" id="status-item-id">
+      <div class="form-group">
+        <label>وضعیت جدید:</label>
+        <select id="status-new-val" onchange="toggleStatusFields()">
+          <option value="سالم">سالم</option>
+          <option value="نیازمند تعمیر">نیازمند تعمیر</option>
+        </select>
       </div>
 
-      <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>لیست کالاها و وضعیت</span>
-        <button id="btn-toggle-edit" class="btn btn-secondary" style="width:auto; padding:6px 12px; font-size:0.8rem;">ویرایش آمار</button>
+      <!-- IF HEALTHY -> REPAIR -->
+      <div id="field-reason-break" class="form-group hidden">
+        <label>علت خرابی:</label>
+        <select id="status-break-reason" onchange="toggleCustomReason()">
+          <option>ضربه خوردن</option>
+          <option>مشکل نرم‌افزاری / سیستم‌عامل</option>
+          <option>نوسان برق</option>
+          <option>استهلاک و عمر مفید</option>
+          <option>آب‌خوردگی و رطوبت</option>
+          <option value="other">سایر (توضیح دهید)</option>
+        </select>
+        <input type="text" id="status-break-custom" placeholder="علت را بنویسید..." class="hidden" style="margin-top:5px;">
       </div>
 
-      <div id="dashboard-items-container">
-        <!-- Item Cards generated via JS -->
+      <!-- IF REPAIR -> HEALTHY -->
+      <div id="field-reason-repair" class="form-group hidden">
+        <label>نحوه تعمیر:</label>
+        <select id="status-repair-method">
+          <option>تعمیر توسط مدرسه</option>
+          <option>تعمیر توسط اداره آموزش و پرورش</option>
+          <option>تعمیر توسط خیرین</option>
+          <option>استفاده از گارانتی</option>
+        </select>
       </div>
-    </section>
-  </main>
 
-  <footer>
-    سامانه هوشمند تجهیزات مدارس کشور
-  </footer>
+      <div class="btn-group">
+        <button type="submit" class="btn btn-primary">ثبت تغییر</button>
+        <button type="button" onclick="closeModals()" class="btn btn-outline">انصراف</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: DELETE ITEM -->
+<div id="modal-delete" class="modal hidden">
+  <div class="modal-content">
+    <div class="card-title">حذف / خروج کالا از امبار</div>
+    <form id="form-delete-item">
+      <input type="hidden" id="delete-item-id">
+      <div class="form-group">
+        <label>دلیل حذف کالا:</label>
+        <select id="delete-reason">
+          <option value="اسقاط شده">اسقاط و ازکارافتاده کامل</option>
+          <option value="دزدیده شده">دزدیده شده (سرقت)</option>
+          <option value="فروخته شده">فروخته شده / مولدسازی</option>
+          <option value="تحویل اداره">تحویل به اداره آموزش و پرورش</option>
+        </select>
+      </div>
+      <div class="btn-group">
+        <button type="submit" class="btn btn-danger">تأیید حذف</button>
+        <button type="button" onclick="closeModals()" class="btn btn-outline">انصراف</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: ADMIN ADD ITEM -->
+<div id="modal-admin-add" class="modal hidden">
+  <div class="modal-content">
+    <div class="card-title">تخصیص کالا به مدرسه</div>
+    <form id="form-admin-add">
+      <div class="form-group">
+        <label>کد مدرسه مقصد:</label>
+        <input type="text" id="admin-target-school" placeholder="مثلاً 1001" required>
+      </div>
+      <div class="form-group">
+        <label>نوع کالا:</label>
+        <select id="admin-add-type">
+          <option>مانیتور</option>
+          <option>کیس کامپیوتر</option>
+          <option>ویدیو پروژکتور</option>
+          <option>لپ‌تاپ</option>
+          <option>تلویزیون</option>
+        </select>
+      </div>
+      <div class="btn-group">
+        <button type="submit" class="btn btn-primary">ارسال به پنل مدیر</button>
+        <button type="button" onclick="closeModals()" class="btn btn-outline">انصراف</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script>
-  // Global Hardware Categories
-  const HARDWARE_TYPES = [
-    { id: 'monitor', title: 'مانیتور', icon: '🖥️' },
-    { id: 'case', title: 'کیس کامپیوتر', icon: '🖥️' },
-    { id: 'projector', title: 'ویدیو پروژکتور', icon: '📹' },
-    { id: 'laptop', title: 'لپ‌تاپ', icon: '💻' },
-    { id: 'tv', title: 'تلویزیون', icon: '📺' }
-  ];
+  const SECRET_KEY = "School_Smart_Inventory_Secret_Key_2026";
 
-  let currentCode = null;
-  let isEditMode = false;
-
-  // LocalStorage Helper
-  const DB = {
-    getSchool: (code) => {
-      const data = localStorage.getItem(`school_${code}`);
-      return data ? JSON.parse(data) : null;
+  // Initial State Database Structure
+  const initialData = {
+    schools: {
+      "1001": { name: "دبیرستان شهید بهشتی", pass: "1234" },
+      "1002": { name: "دبستان ارمغان", pass: "1234" }
     },
-    saveSchool: (code, schoolData) => {
-      localStorage.setItem(`school_${code}`, JSON.stringify(schoolData));
-    }
+    admin: { user: "admin", pass: "admin123" },
+    items: [
+      { id: 1, schoolCode: "1001", type: "مانیتور", status: "سالم", source: "خرید از سرانه مدرسه", history: [] },
+      { id: 2, schoolCode: "1001", type: "ویدیو پروژکتور", status: "نیازمند تعمیر", source: "نوسازی مدارس", history: ["علت خرابی: نوسان برق"] }
+    ],
+    notifications: [
+      // { id, targetRole: 'school'|'admin', schoolCode, type: 'ALLOCATED'|'RETURN_TO_ADMIN', itemData }
+    ]
   };
 
-  // UI Navigation Helper
-  function showView(viewId) {
-    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-    document.getElementById(viewId).classList.add('active');
+  // --- ENCRYPTION STORAGE LOGIC ---
+  function getDB() {
+    const cipherText = localStorage.getItem("APP_DB");
+    if (!cipherText) {
+      saveDB(initialData);
+      return initialData;
+    }
+    try {
+      const bytes = CryptoJS.AES.decrypt(cipherText, SECRET_KEY);
+      const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+      return decryptedData;
+    } catch (e) {
+      console.error("خطا در رمزگشایی داده‌ها. بازنشانی به داده اولیه.");
+      return initialData;
+    }
   }
 
-  // Generate Initial Form Registration Fields
-  function renderRegisterForm() {
-    const container = document.getElementById('initial-items-container');
+  function saveDB(data) {
+    const cipherText = CryptoJS.AES.encrypt(JSON.stringify(data), SECRET_KEY).toString();
+    localStorage.setItem("APP_DB", cipherText);
+  }
+
+  // --- APP STATE ---
+  let currentUser = null; // { role: 'school'|'admin', code: '1001' }
+
+  function toggleLoginInputs() {
+    const role = document.getElementById('login-role').value;
+    document.getElementById('lbl-username').innerText = role === 'school' ? 'کد مدرسه:' : 'نام کاربری امین اموال:';
+  }
+
+  // Login Form
+  document.getElementById('form-login').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const db = getDB();
+    const role = document.getElementById('login-role').value;
+    const user = document.getElementById('login-username').value.trim();
+    const pass = document.getElementById('login-password').value.trim();
+
+    if (role === 'school') {
+      if (db.schools[user] && db.schools[user].pass === pass) {
+        currentUser = { role: 'school', code: user, name: db.schools[user].name };
+        loadSchoolDashboard();
+      } else {
+        alert("کد مدرسه یا رمز عبور اشتباه است (پیش‌فرض کد 1001 و رمز 1234)");
+      }
+    } else {
+      if (db.admin.user === user && db.admin.pass === pass) {
+        currentUser = { role: 'admin' };
+        loadAdminDashboard();
+      } else {
+        alert("نام کاربری یا رمز امین اموال اشتباه است (پیش‌فرض admin و رمز admin123)");
+      }
+    }
+  });
+
+  function logout() {
+    currentUser = null;
+    document.getElementById('view-school').classList.add('hidden');
+    document.getElementById('view-admin').classList.add('hidden');
+    document.getElementById('view-login').classList.remove('hidden');
+  }
+
+  // --- SCHOOL DASHBOARD ---
+  function loadSchoolDashboard() {
+    document.getElementById('view-login').classList.add('hidden');
+    document.getElementById('view-school').classList.remove('hidden');
+    document.getElementById('school-title').innerText = currentUser.name;
+    document.getElementById('school-code-display').innerText = currentUser.code;
+
+    renderSchoolNotifications();
+    renderSchoolItems();
+  }
+
+  function renderSchoolNotifications() {
+    const db = getDB();
+    const container = document.getElementById('school-notifications');
     container.innerHTML = '';
 
-    HARDWARE_TYPES.forEach(item => {
+    const myNotifs = db.notifications.filter(n => n.targetRole === 'school' && n.schoolCode === currentUser.code);
+    
+    myNotifs.forEach(n => {
       const div = document.createElement('div');
-      div.className = 'item-card';
-      div.style.padding = '10px';
-      div.style.marginBottom = '8px';
-      
+      div.className = 'notification';
       div.innerHTML = `
-        <div style="font-weight:600; font-size:0.85rem; margin-bottom:6px;">${item.icon} ${item.title}</div>
-        <div class="edit-grid">
-          <div>
-            <label>سالم</label>
-            <input type="number" min="0" value="0" data-item="${item.id}" data-type="healthy" required>
-          </div>
-          <div>
-            <label>نیازمند تعمیر</label>
-            <input type="number" min="0" value="0" data-item="${item.id}" data-type="repair" required>
-          </div>
-          <div>
-            <label>اسقاطی</label>
-            <input type="number" min="0" value="0" data-item="${item.id}" data-type="broken" required>
-          </div>
+        <strong>اعلان اداره:</strong> کالای <b>${n.itemData.type}</b> به مدرسه شما تخصیص یافته است.
+        <div class="btn-group" style="margin-top:6px;">
+          <button onclick="acceptAdminItem(${n.id})" class="btn btn-success" style="padding:4px 8px; font-size:0.75rem;">تأیید و دریافت</button>
+          <button onclick="rejectNotification(${n.id})" class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;">رد تخصیص</button>
         </div>
       `;
       container.appendChild(div);
     });
   }
 
-  // Handle Login Event
-  document.getElementById('form-login').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const codeInput = document.getElementById('login-code').value.trim();
-    if (!codeInput) return;
+  function acceptAdminItem(notifId) {
+    const db = getDB();
+    const notif = db.notifications.find(n => n.id === notifId);
+    if (!notif) return;
 
-    currentCode = codeInput;
-    const school = DB.getSchool(currentCode);
-
-    if (school) {
-      loadDashboard();
-    } else {
-      renderRegisterForm();
-      showView('view-register');
-    }
-  });
-
-  // Handle Registration Event
-  document.getElementById('form-register').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const itemsData = {};
-    HARDWARE_TYPES.forEach(item => {
-      const healthy = parseInt(document.querySelector(`input[data-item="${item.id}"][data-type="healthy"]`).value) || 0;
-      const repair = parseInt(document.querySelector(`input[data-item="${item.id}"][data-type="repair"]`).value) || 0;
-      const broken = parseInt(document.querySelector(`input[data-item="${item.id}"][data-type="broken"]`).value) || 0;
-
-      itemsData[item.id] = { healthy, repair, broken };
+    db.items.push({
+      id: Date.now(),
+      schoolCode: currentUser.code,
+      type: notif.itemData.type,
+      status: "سالم",
+      source: "اداره کل / آموزش و پرورش",
+      history: ["دریافت و تأیید تخصیص از اداره"]
     });
 
-    const newSchool = {
-      code: currentCode,
-      name: document.getElementById('reg-school-name').value.trim(),
-      manager: document.getElementById('reg-manager-name').value.trim(),
-      items: itemsData
-    };
-
-    DB.saveSchool(currentCode, newSchool);
-    loadDashboard();
-  });
-
-  // Render Dashboard
-  function loadDashboard() {
-    const school = DB.getSchool(currentCode);
-    if (!school) return;
-
-    document.getElementById('dash-school-name').innerText = school.name;
-    document.getElementById('dash-manager-name').innerText = school.manager;
-    document.getElementById('dash-school-code').innerText = school.code;
-
-    renderDashboardItems();
-    showView('view-dashboard');
+    db.notifications = db.notifications.filter(n => n.id !== notifId);
+    saveDB(db);
+    loadSchoolDashboard();
   }
 
-  function renderDashboardItems() {
-    const school = DB.getSchool(currentCode);
-    const container = document.getElementById('dashboard-items-container');
+  function rejectNotification(notifId) {
+    const db = getDB();
+    db.notifications = db.notifications.filter(n => n.id !== notifId);
+    saveDB(db);
+    if (currentUser.role === 'school') loadSchoolDashboard();
+    else loadAdminDashboard();
+  }
+
+  function renderSchoolItems() {
+    const db = getDB();
+    const container = document.getElementById('school-items-list');
     container.innerHTML = '';
 
-    HARDWARE_TYPES.forEach(hw => {
-      const data = school.items[hw.id] || { healthy: 0, repair: 0, broken: 0 };
-      const total = data.healthy + data.repair + data.broken;
+    const myItems = db.items.filter(i => i.schoolCode === currentUser.code);
 
-      const card = document.createElement('div');
-      card.className = 'item-card';
+    if (myItems.length === 0) {
+      container.innerHTML = '<p style="font-size:0.8rem; color:#64748b;">هیچ کالایی ثبت نشده است.</p>';
+      return;
+    }
 
-      if (!isEditMode) {
-        card.innerHTML = `
-          <div class="item-header">
-            <span class="item-title">${hw.icon} ${hw.title}</span>
-            <span class="status-badge status-healthy">کل: ${total} عدد</span>
-          </div>
-          <div class="item-body">
-            <span>سالم: <strong>${data.healthy}</strong></span>
-            <span>نیازمند تعمیر: <strong>${data.repair}</strong></span>
-            <span>اسقاطی: <strong>${data.broken}</strong></span>
-          </div>
-        `;
-      } else {
-        card.innerHTML = `
-          <div class="item-header">
-            <span class="item-title">${hw.icon} ${hw.title}</span>
-          </div>
-          <div class="edit-grid">
-            <div>
-              <label>سالم</label>
-              <input type="number" min="0" value="${data.healthy}" data-edit-item="${hw.id}" data-edit-type="healthy">
-            </div>
-            <div>
-              <label>تعمیری</label>
-              <input type="number" min="0" value="${data.repair}" data-edit-item="${hw.id}" data-edit-type="repair">
-            </div>
-            <div>
-              <label>اسقاطی</label>
-              <input type="number" min="0" value="${data.broken}" data-edit-item="${hw.id}" data-edit-type="broken">
-            </div>
-          </div>
-        `;
-      }
+    myItems.forEach(item => {
+      const isHealthy = item.status === 'سالم';
+      const badgeClass = isHealthy ? 'badge-healthy' : 'badge-repair';
 
-      container.appendChild(card);
+      const div = document.createElement('div');
+      div.className = 'item-row';
+      div.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <strong>${item.type}</strong>
+          <span class="badge ${badgeClass}">${item.status}</span>
+        </div>
+        <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">
+          مبدأ: ${item.source}
+          ${item.history.length > 0 ? `<br>تاریخچه: ${item.history[item.history.length - 1]}` : ''}
+        </div>
+        <div class="btn-group" style="margin-top:8px;">
+          <button onclick="openStatusModal(${item.id}, '${item.status}')" class="btn btn-outline" style="padding:4px; font-size:0.75rem;">تغییر وضعیت سلامت</button>
+          <button onclick="openDeleteModal(${item.id})" class="btn btn-outline" style="padding:4px; font-size:0.75rem; color:var(--danger); border-color:#fca5a5;">حذف</button>
+        </div>
+      `;
+      container.appendChild(div);
     });
   }
 
-  // Toggle Edit Mode & Save Changes
-  document.getElementById('btn-toggle-edit').addEventListener('click', function() {
-    const school = DB.getSchool(currentCode);
-    
-    if (isEditMode) {
-      // Save changes
-      HARDWARE_TYPES.forEach(hw => {
-        const healthy = parseInt(document.querySelector(`input[data-edit-item="${hw.id}"][data-edit-type="healthy"]`).value) || 0;
-        const repair = parseInt(document.querySelector(`input[data-edit-item="${hw.id}"][data-edit-type="repair"]`).value) || 0;
-        const broken = parseInt(document.querySelector(`input[data-edit-item="${hw.id}"][data-edit-type="broken"]`).value) || 0;
+  // --- MODALS & FORM ACTIONS ---
+  function openAddModal() { document.getElementById('modal-add').classList.remove('hidden'); }
+  function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); }
 
-        school.items[hw.id] = { healthy, repair, broken };
-      });
+  document.getElementById('form-add-item').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const db = getDB();
+    const type = document.getElementById('add-type').value;
+    const source = document.getElementById('add-source').value;
 
-      DB.saveSchool(currentCode, school);
-      this.innerText = 'ویرایش آمار';
-      this.className = 'btn btn-secondary';
-      isEditMode = false;
+    db.items.push({
+      id: Date.now(),
+      schoolCode: currentUser.code,
+      type: type,
+      status: "سالم",
+      source: source,
+      history: ["ثبت اولیه کالا توسط مدیر"]
+    });
+
+    saveDB(db);
+    closeModals();
+    renderSchoolItems();
+  });
+
+  // Change Status Logic
+  function openStatusModal(itemId, currentStatus) {
+    document.getElementById('status-item-id').value = itemId;
+    document.getElementById('modal-status').classList.remove('hidden');
+    toggleStatusFields();
+  }
+
+  function toggleStatusFields() {
+    const val = document.getElementById('status-new-val').value;
+    if (val === 'نیازمند تعمیر') {
+      document.getElementById('field-reason-break').classList.remove('hidden');
+      document.getElementById('field-reason-repair').classList.add('hidden');
     } else {
-      // Enter Edit mode
-      this.innerText = 'ذخیره تغییرات';
-      this.className = 'btn btn-primary';
-      isEditMode = true;
+      document.getElementById('field-reason-break').classList.add('hidden');
+      document.getElementById('field-reason-repair').classList.remove('hidden');
+    }
+  }
+
+  function toggleCustomReason() {
+    const reason = document.getElementById('status-break-reason').value;
+    if (reason === 'other') document.getElementById('status-break-custom').classList.remove('hidden');
+    else document.getElementById('status-break-custom').classList.add('hidden');
+  }
+
+  document.getElementById('form-change-status').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const db = getDB();
+    const itemId = parseInt(document.getElementById('status-item-id').value);
+    const newStatus = document.getElementById('status-new-val').value;
+    
+    const item = db.items.find(i => i.id === itemId);
+    if (!item) return;
+
+    let logNote = "";
+    if (newStatus === 'نیازمند تعمیر') {
+      const reasonSelect = document.getElementById('status-break-reason').value;
+      const customReason = document.getElementById('status-break-custom').value;
+      const finalReason = reasonSelect === 'other' ? customReason : reasonSelect;
+      logNote = `علت خرابی: ${finalReason}`;
+    } else {
+      const method = document.getElementById('status-repair-method').value;
+      logNote = `نحوه تعمیر: ${method}`;
     }
 
-    renderDashboardItems();
+    item.status = newStatus;
+    item.history.push(logNote);
+
+    saveDB(db);
+    closeModals();
+    renderSchoolItems();
   });
 
-  // Logout Event
-  document.getElementById('btn-logout').addEventListener('click', function() {
-    currentCode = null;
-    isEditMode = false;
-    document.getElementById('login-code').value = '';
-    document.getElementById('btn-toggle-edit').innerText = 'ویرایش آمار';
-    document.getElementById('btn-toggle-edit').className = 'btn btn-secondary';
-    showView('view-login');
+  // Delete Logic
+  function openDeleteModal(itemId) {
+    document.getElementById('delete-item-id').value = itemId;
+    document.getElementById('modal-delete').classList.remove('hidden');
+  }
+
+  document.getElementById('form-delete-item').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const db = getDB();
+    const itemId = parseInt(document.getElementById('delete-item-id').value);
+    const reason = document.getElementById('delete-reason').value;
+
+    if (reason === 'تحویل اداره') {
+      const item = db.items.find(i => i.id === itemId);
+      // Send notification to Admin
+      db.notifications.push({
+        id: Date.now(),
+        targetRole: 'admin',
+        schoolCode: currentUser.code,
+        schoolName: currentUser.name,
+        type: 'RETURN_TO_ADMIN',
+        itemData: item
+      });
+      // Temporarily mark as pending
+      item.status = "در انتظار تأیید تحویل اداره";
+      alert("درخواست تحویل به اداره برای امین اموال ارسال شد.");
+    } else {
+      // Direct delete
+      db.items = db.items.filter(i => i.id !== itemId);
+    }
+
+    saveDB(db);
+    closeModals();
+    renderSchoolItems();
   });
+
+  // --- ADMIN DASHBOARD LOGIC ---
+  function loadAdminDashboard() {
+    document.getElementById('view-login').classList.add('hidden');
+    document.getElementById('view-admin').classList.remove('hidden');
+
+    renderAdminNotifications();
+    renderAdminSchools();
+  }
+
+  function renderAdminNotifications() {
+    const db = getDB();
+    const container = document.getElementById('admin-notifications');
+    container.innerHTML = '';
+
+    const adminNotifs = db.notifications.filter(n => n.targetRole === 'admin');
+
+    adminNotifs.forEach(n => {
+      const div = document.createElement('div');
+      div.className = 'notification';
+      div.innerHTML = `
+        <strong>اعلان مدرسه ${n.schoolName}:</strong> قصد تحویل کالای <b>${n.itemData.type}</b> به اداره را دارد.
+        <div class="btn-group" style="margin-top:6px;">
+          <button onclick="acceptReturnedItem(${n.id}, ${n.itemData.id})" class="btn btn-success" style="padding:4px 8px; font-size:0.75rem;">تأیید تحویل و حذف از اموال مدرسه</button>
+          <button onclick="rejectNotification(${n.id})" class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;">رد درخواست</button>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function acceptReturnedItem(notifId, itemId) {
+    const db = getDB();
+    // Delete item permanently from school
+    db.items = db.items.filter(i => i.id !== itemId);
+    db.notifications = db.notifications.filter(n => n.id !== notifId);
+    saveDB(db);
+    loadAdminDashboard();
+  }
+
+  function openAdminAddModal() { document.getElementById('modal-admin-add').classList.remove('hidden'); }
+
+  document.getElementById('form-admin-add').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const db = getDB();
+    const schoolCode = document.getElementById('admin-target-school').value.trim();
+    const type = document.getElementById('admin-add-type').value;
+
+    if (!db.schools[schoolCode]) {
+      alert("کد مدرسه مورد نظر در سامانه یافت نشد!");
+      return;
+    }
+
+    db.notifications.push({
+      id: Date.now(),
+      targetRole: 'school',
+      schoolCode: schoolCode,
+      type: 'ALLOCATED',
+      itemData: { type }
+    });
+
+    saveDB(db);
+    closeModals();
+    alert("اعلان تخصیص کالا برای مدیر مدرسه ارسال شد.");
+  });
+
+  function renderAdminSchools() {
+    const db = getDB();
+    const container = document.getElementById('admin-schools-list');
+    container.innerHTML = '';
+
+    Object.keys(db.schools).forEach(code => {
+      const school = db.schools[code];
+      const schoolItems = db.items.filter(i => i.schoolCode === code);
+
+      const div = document.createElement('div');
+      div.className = 'item-row';
+      div.innerHTML = `
+        <strong>${school.name} (کد: ${code})</strong>
+        <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">
+          تعداد کل تجهیزات: ${schoolItems.length} عدد
+          <br>تجهیزات سالم: ${schoolItems.filter(i => i.status === 'سالم').length} | نیازمند تعمیر: ${schoolItems.filter(i => i.status === 'نیازمند تعمیر').length}
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
 </script>
 </body>
 </html>
