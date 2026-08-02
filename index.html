@@ -3,132 +3,307 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>سامانه پیشرفته مدیریت تجهیزات هوشمند مدارس</title>
+  <title>سامانه پیشرفته مدیریت تجهیزات و اموال مدارس</title>
+  
   <!-- Crypto-JS for AES Encryption -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  
+  <!-- jQuery & Select2 CSS/JS for Searchable Dropdown -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
   <style>
     :root {
       --primary: #0f172a;
+      --primary-light: #1e293b;
       --accent: #2563eb;
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --text: #1e293b;
-      --border: #e2e8f0;
+      --accent-hover: #1d4ed8;
+      --bg: #f1f5f9;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #cbd5e1;
       --success: #10b981;
       --warning: #f59e0b;
       --danger: #ef4444;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding-bottom: 20px; }
-    .container { max-width: 500px; margin: 0 auto; padding: 12px; }
-    header { background: var(--primary); color: white; padding: 16px; text-align: center; border-radius: 0 0 16px 16px; margin-bottom: 16px; }
-    header h1 { font-size: 1.1rem; }
-    header p { font-size: 0.75rem; opacity: 0.8; margin-top: 4px; }
-    
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-    .card-title { font-size: 0.95rem; font-weight: bold; margin-bottom: 12px; color: var(--primary); display: flex; justify-content: space-between; align-items: center; }
-    
-    .form-group { margin-bottom: 10px; }
-    label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; }
-    input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; background: #fff; }
-    
-    .btn { border: none; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; width: 100%; transition: 0.2s; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app-wrapper {
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px;
+      flex: 1;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white;
+      padding: 20px 24px;
+      text-align: center;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    header .titles h1 { font-size: 1.3rem; font-weight: 800; }
+    header .titles p { font-size: 0.8rem; opacity: 0.8; margin-top: 4px; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: var(--primary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--bg);
+      padding-bottom: 8px;
+    }
+
+    /* شناسنامه مدرسه */
+    .school-identity-box {
+      background: #f8fafc;
+      border: 1px dashed var(--accent);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+    }
+
+    .school-identity-box .school-name { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+    .school-identity-box .manager-name { font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-top: 4px; }
+
+    .identity-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .id-tag { background: #e2e8f0; color: var(--text-main); font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; font-weight: 500; }
+
+    /* Form Inputs & Buttons */
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 4px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      background: #fff;
+    }
+    input:focus, select:focus { border-color: var(--accent); outline: none; }
+
+    .btn {
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+    }
+
     .btn-primary { background: var(--accent); color: white; }
-    .btn-danger { background: var(--danger); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); }
     .btn-success { background: var(--success); color: white; }
-    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+    .btn-outline:hover { background: #e2e8f0; }
+
     .btn-group { display: flex; gap: 8px; margin-top: 8px; }
 
-    .badge { font-size: 0.7rem; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
+    /* Category Group & Cards */
+    .category-group {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+    .category-header {
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--accent);
+      margin-bottom: 10px;
+      border-bottom: 1px dashed var(--border);
+      padding-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .clickable-school {
+      cursor: pointer;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+      transition: background 0.2s;
+    }
+    .clickable-school:hover { background: #e0e7ff; }
+
+    .badge { font-size: 0.72rem; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
     .badge-healthy { background: #d1fae5; color: #065f46; }
     .badge-repair { background: #fef3c7; color: #92400e; }
-    .badge-pending { background: #e0e7ff; color: #3730a3; }
+
+    .asset-code {
+      display: inline-block;
+      background: #e0f2fe;
+      color: #0369a1;
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
 
     .notification { background: #eff6ff; border-right: 4px solid var(--accent); padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 0.82rem; }
     .hidden { display: none !important; }
-    
-    .item-row { border-bottom: 1px solid var(--border); padding: 10px 0; }
-    .item-row:last-child { border-bottom: none; }
-    
-    .modal { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
-    .modal-content { background: white; padding: 16px; border-radius: 12px; width: 100%; max-width: 400px; }
+
+    /* Modals */
+    .modal {
+      position: fixed; top:0; left:0; right:0; bottom:0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; padding: 16px;
+    }
+    .modal-content {
+      background: white; padding: 20px; border-radius: 16px;
+      width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .item-card-row {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+
+    /* Select2 RTL Fixes */
+    .select2-container { width: 100% !important; text-align: right; }
+    .select2-dropdown { direction: rtl; }
   </style>
 </head>
 <body>
 
-<header>
-  <h1 id="app-header-title">سامانه هوشمند اموال مدارس</h1>
-  <p id="app-header-sub">سیستم یکپارچه نظارت و انبارداری</p>
-</header>
-
-<div class="container">
+<div class="app-wrapper">
+  <header>
+    <div class="titles">
+      <h1>سامانه هوشمند اموال و تجهیزات مدارس</h1>
+      <p>سیستم یکپارچه انبارداری، نظارت و گزارش‌گیری الکترونیکی</p>
+    </div>
+    <div id="header-user-info"></div>
+  </header>
 
   <!-- LOGIN VIEW -->
-  <div id="view-login" class="card">
+  <div id="view-login" class="card" style="max-width: 420px; margin: 40px auto;">
     <div class="card-title">ورود به سامانه</div>
     <form id="form-login">
       <div class="form-group">
-        <label>نوع کاربر:</label>
+        <label>نقش کاربر:</label>
         <select id="login-role" onchange="toggleLoginInputs()">
           <option value="school">مدیر مدرسه</option>
           <option value="admin">امین اموال اداره</option>
         </select>
       </div>
       <div class="form-group">
-        <label id="lbl-username">کد مدرسه:</label>
-        <input type="text" id="login-username" placeholder="مثلاً 1001" required>
+        <label id="lbl-username">کد مدرسه (۱ تا ۱۰):</label>
+        <input type="text" id="login-username" placeholder="مثلاً 1" required>
       </div>
       <div class="form-group">
         <label>رمز عبور:</label>
         <input type="password" id="login-password" placeholder="******" required>
       </div>
-      <button type="submit" class="btn btn-primary">ورود به پنل</button>
+      <button type="submit" class="btn btn-primary" style="width:100%;">ورود به پنل کاربری</button>
     </form>
   </div>
 
   <!-- SCHOOL DASHBOARD -->
   <div id="view-school" class="hidden">
-    <div class="card" style="background:#f0f9ff;">
-      <div class="card-title">
-        <span id="school-title">مدرسه ...</span>
-        <button onclick="logout()" class="btn btn-outline" style="width:auto; padding:4px 8px; font-size:0.7rem;">خروج</button>
+    <div class="school-identity-box card">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+        <div>
+          <div class="school-name" id="sc-identity-name">---</div>
+          <div class="manager-name" id="sc-identity-manager">مدیر: ---</div>
+        </div>
+        <button onclick="exportSchoolExcel()" class="btn btn-success" style="font-size:0.75rem;">📥 خروج اکسل اموال</button>
       </div>
-      <p style="font-size:0.75rem; color:#0369a1;">کد واحد آموزشی: <span id="school-code-display"></span></p>
+      <div class="identity-tags" id="sc-identity-tags"></div>
     </div>
 
-    <!-- NOTIFICATIONS -->
     <div id="school-notifications"></div>
 
-    <!-- ACTIONS -->
-    <button onclick="openAddModal()" class="btn btn-primary" style="margin-bottom: 12px;">+ ثبت کالای جدید</button>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">مدیریت اموال</div>
+        <button onclick="openAddModal()" class="btn btn-primary" style="width:100%; margin-bottom:12px;">+ ثبت کالای جدید</button>
+        <p style="font-size:0.75rem; color:var(--text-muted);">برای هر کالا یک کد اموال اختصاصی در کل منطقه ثبت می‌شود.</p>
+      </div>
 
-    <!-- ITEMS LIST -->
-    <div class="card">
-      <div class="card-title">کالاهای هوشمند مدرسه</div>
-      <div id="school-items-list"></div>
+      <div class="card">
+        <div class="card-title">تجهیزات موجود (تفکیک‌شده بر اساس نوع کالا)</div>
+        <div id="school-items-grouped"></div>
+      </div>
     </div>
   </div>
 
   <!-- ADMIN DASHBOARD -->
   <div id="view-admin" class="hidden">
-    <div class="card" style="background:#fdf4ff;">
-      <div class="card-title">
-        <span>پنل امین اموال اداره</span>
-        <button onclick="logout()" class="btn btn-outline" style="width:auto; padding:4px 8px; font-size:0.7rem;">خروج</button>
-      </div>
+    <div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+      <div class="card-title" style="border:none; padding:0; margin:0;">پنل امین اموال اداره</div>
+      <button onclick="exportAllAdminExcel()" class="btn btn-success">📊 دریافت گزارش کامل اکسل کل منطقه</button>
     </div>
 
-    <!-- ADMIN NOTIFICATIONS -->
     <div id="admin-notifications"></div>
 
-    <button onclick="openAdminAddModal()" class="btn btn-primary" style="margin-bottom: 12px;">+ تخصیص کالای جدید به مدرسه</button>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">عملیات اداری</div>
+        <button onclick="openAdminAddModal()" class="btn btn-primary" style="width:100%; margin-bottom:10px;">+ تخصیص و ارسال کالا به مدرسه</button>
+        <button onclick="openAddSchoolModal()" class="btn btn-outline" style="width:100%;">+ تعریف مدرسه جدید در منطقه</button>
+      </div>
 
-    <div class="card">
-      <div class="card-title">گزارش کل اموال مدارس</div>
-      <div id="admin-schools-list"></div>
+      <div class="card">
+        <div class="card-title">فهرست مدارس (برای مشاهده تفکیکی اموال کلیک کنید)</div>
+        <div id="admin-schools-list"></div>
+      </div>
     </div>
   </div>
-
 </div>
 
 <!-- MODAL: ADD ITEM (SCHOOL) -->
@@ -137,13 +312,19 @@
     <div class="card-title">افزودن کالای جدید</div>
     <form id="form-add-item">
       <div class="form-group">
+        <label>کد اموال اختصاصی (کد یکتای منطقه):</label>
+        <input type="text" id="add-asset-code" placeholder="مثلاً 10045" required>
+      </div>
+      <div class="form-group">
         <label>نوع کالا:</label>
+
         <select id="add-type">
           <option>مانیتور</option>
           <option>کیس کامپیوتر</option>
           <option>ویدیو پروژکتور</option>
           <option>لپ‌تاپ</option>
           <option>تلویزیون</option>
+          <option>پرینتر</option>
         </select>
       </div>
       <div class="form-group">
@@ -157,7 +338,72 @@
         </select>
       </div>
       <div class="btn-group">
-        <button type="submit" class="btn btn-primary">ثبت</button>
+        <button type="submit" class="btn btn-primary">ثبت کالا</button>
+        <button type="button" onclick="closeModals()" class="btn btn-outline">انصراف</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: ADMIN ADD ITEM (SEARCHABLE DROPDOWN) -->
+<div id="modal-admin-add" class="modal hidden">
+  <div class="modal-content">
+    <div class="card-title">تخصیص کالا به مدرسه</div>
+    <form id="form-admin-add">
+      <div class="form-group">
+        <label>انتخاب مدرسه مقصد (جستجو بر اساس نام):</label>
+        <select id="admin-target-school-select" class="searchable-select" style="width: 100%;">
+          <!-- Options populated dynamically -->
+        </select>
+      </div>
+      <div class="form-group">
+        <label>کد اموال اختصاصی (کد یکتای منطقه):</label>
+        <input type="text" id="admin-add-asset-code" placeholder="مثلاً 10099" required>
+      </div>
+      <div class="form-group">
+        <label>نوع کالا:</label>
+        <select id="admin-add-type">
+          <option>مانیتور</option>
+          <option>کیس کامپیوتر</option>
+          <option>ویدیو پروژکتور</option>
+          <option>لپ‌تاپ</option>
+          <option>تلویزیون</option>
+          <option>پرینتر</option>
+        </select>
+      </div>
+      <div class="btn-group">
+        <button type="submit" class="btn btn-primary">ارسال به پنل مدیر</button>
+        <button type="button" onclick="closeModals()" class="btn btn-outline">انصراف</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: REGISTER NEW SCHOOL -->
+<div id="modal-add-school" class="modal hidden">
+  <div class="modal-content">
+    <div class="card-title">ثبت مدرسه جدید در منطقه</div>
+    <form id="form-add-school">
+      <div class="form-group"><label>کد مدرسه (نام کاربری):</label><input type="text" id="ns-code" required></div>
+      <div class="form-group"><label>نام مدرسه:</label><input type="text" id="ns-name" required></div>
+      <div class="form-group"><label>نام مدیر:</label><input type="text" id="ns-manager" required></div>
+      <div class="form-group"><label>تعداد دانش‌آموز:</label><input type="number" id="ns-students" required></div>
+      <div class="form-group">
+        <label>نوع مدرسه:</label>
+        <select id="ns-type"><option>دولتی</option><option>غیر دولتی</option><option>شاهد</option><option>تیزپوشان</option></select>
+      </div>
+      <div class="form-group">
+        <label>منطقه:</label>
+        <select id="ns-region"><option>شهری</option><option>روستایی</option><option>عشایری</option></select>
+      </div>
+      <div class="form-group">
+        <label>جنسیت:</label>
+        <select id="ns-gender"><option>پسرانه</option><option>دخترانه</option><option>مختلط</option></select>
+      </div>
+      <div class="form-group"><label>تعداد کلاس فعال:</label><input type="number" id="ns-classes" required></div>
+      <div class="form-group"><label>رمز عبور ورود:</label><input type="text" id="ns-pass" value="1234" required></div>
+      <div class="btn-group">
+        <button type="submit" class="btn btn-primary">ثبت مدرسه</button>
         <button type="button" onclick="closeModals()" class="btn btn-outline">انصراف</button>
       </div>
     </form>
@@ -167,7 +413,7 @@
 <!-- MODAL: CHANGE STATUS -->
 <div id="modal-status" class="modal hidden">
   <div class="modal-content">
-    <div class="card-title">تغییر وضعیت سلامت</div>
+    <div class="card-title">تغییر وضعیت سلامت کالا</div>
     <form id="form-change-status">
       <input type="hidden" id="status-item-id">
       <div class="form-group">
@@ -177,32 +423,23 @@
           <option value="نیازمند تعمیر">نیازمند تعمیر</option>
         </select>
       </div>
-
-      <!-- IF HEALTHY -> REPAIR -->
       <div id="field-reason-break" class="form-group hidden">
         <label>علت خرابی:</label>
-        <select id="status-break-reason" onchange="toggleCustomReason()">
+        <select id="status-break-reason">
           <option>ضربه خوردن</option>
           <option>مشکل نرم‌افزاری / سیستم‌عامل</option>
           <option>نوسان برق</option>
           <option>استهلاک و عمر مفید</option>
-          <option>آب‌خوردگی و رطوبت</option>
-          <option value="other">سایر (توضیح دهید)</option>
         </select>
-        <input type="text" id="status-break-custom" placeholder="علت را بنویسید..." class="hidden" style="margin-top:5px;">
       </div>
-
-      <!-- IF REPAIR -> HEALTHY -->
       <div id="field-reason-repair" class="form-group hidden">
         <label>نحوه تعمیر:</label>
         <select id="status-repair-method">
           <option>تعمیر توسط مدرسه</option>
           <option>تعمیر توسط اداره آموزش و پرورش</option>
-          <option>تعمیر توسط خیرین</option>
           <option>استفاده از گارانتی</option>
         </select>
       </div>
-
       <div class="btn-group">
         <button type="submit" class="btn btn-primary">ثبت تغییر</button>
         <button type="button" onclick="closeModals()" class="btn btn-outline">انصراف</button>
@@ -214,103 +451,87 @@
 <!-- MODAL: DELETE ITEM -->
 <div id="modal-delete" class="modal hidden">
   <div class="modal-content">
-    <div class="card-title">حذف / خروج کالا از امبار</div>
+    <div class="card-title">حذف / خروج کالا از اموال</div>
     <form id="form-delete-item">
       <input type="hidden" id="delete-item-id">
       <div class="form-group">
-        <label>دلیل حذف کالا:</label>
+        <label>دلیل خروج کالا:</label>
         <select id="delete-reason">
           <option value="اسقاط شده">اسقاط و ازکارافتاده کامل</option>
           <option value="دزدیده شده">دزدیده شده (سرقت)</option>
-          <option value="فروخته شده">فروخته شده / مولدسازی</option>
           <option value="تحویل اداره">تحویل به اداره آموزش و پرورش</option>
         </select>
       </div>
       <div class="btn-group">
-        <button type="submit" class="btn btn-danger">تأیید حذف</button>
+        <button type="submit" class="btn btn-danger">تأیید خروج</button>
         <button type="button" onclick="closeModals()" class="btn btn-outline">انصراف</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- MODAL: ADMIN ADD ITEM -->
-<div id="modal-admin-add" class="modal hidden">
+<!-- MODAL: ADMIN VIEW SCHOOL DETAILS -->
+<div id="modal-admin-view-school" class="modal hidden">
   <div class="modal-content">
-    <div class="card-title">تخصیص کالا به مدرسه</div>
-    <form id="form-admin-add">
-      <div class="form-group">
-        <label>کد مدرسه مقصد:</label>
-        <input type="text" id="admin-target-school" placeholder="مثلاً 1001" required>
-      </div>
-      <div class="form-group">
-        <label>نوع کالا:</label>
-        <select id="admin-add-type">
-          <option>مانیتور</option>
-          <option>کیس کامپیوتر</option>
-          <option>ویدیو پروژکتور</option>
-          <option>لپ‌تاپ</option>
-          <option>تلویزیون</option>
-        </select>
-      </div>
-      <div class="btn-group">
-        <button type="submit" class="btn btn-primary">ارسال به پنل مدیر</button>
-        <button type="button" onclick="closeModals()" class="btn btn-outline">انصراف</button>
-      </div>
-    </form>
+    <div class="card-title" id="admin-modal-school-title">جزئیات اموال مدرسه</div>
+    <div id="admin-modal-school-identity"></div>
+    <hr style="margin: 12px 0; border:0; border-top:1px solid var(--border);">
+    <div id="admin-modal-school-items-grouped"></div>
+    <div class="btn-group" style="margin-top:12px;">
+      <button type="button" onclick="closeModals()" class="btn btn-outline" style="width:100%;">بستن</button>
+    </div>
   </div>
 </div>
 
 <script>
-  const SECRET_KEY = "School_Smart_Inventory_Secret_Key_2026";
+  const SECRET_KEY = "School_Smart_Inventory_Key_2026";
 
-  // Initial State Database Structure
+  // Data Base Setup: 10 Sample Schools with simplified Credentials (1..10, pass: 1234) & Admin (123 / 123)
   const initialData = {
     schools: {
-      "1001": { name: "دبیرستان شهید بهشتی", pass: "1234" },
-      "1002": { name: "دبستان ارمغان", pass: "1234" }
+      "1": { name: "دبیرستان شهید بهشتی", manager: "علی رضا محمدی", studentsCount: 320, type: "دولتی", region: "شهری", gender: "پسرانه", activeClasses: 10, pass: "1234" },
+      "2": { name: "دبستان ارمغان دانش", manager: "مریم ابراهیمی", studentsCount: 210, type: "غیر دولتی", region: "شهری", gender: "دخترانه", activeClasses: 8, pass: "1234" },
+      "3": { name: "هنرستان فنی امام خمینی", manager: "حسین کاظمی", studentsCount: 400, type: "دولتی", region: "شهری", gender: "پسرانه", activeClasses: 14, pass: "1234" },
+      "4": { name: "دبیرستان فرزانگان", manager: "زهرا سلیمانی", studentsCount: 280, type: "تیزپوشان", region: "شهری", gender: "دخترانه", activeClasses: 9, pass: "1234" },
+      "5": { name: "دبستان شهداء روستای مرکزی", manager: "رضا کریمی", studentsCount: 95, type: "دولتی", region: "روستایی", gender: "مختلط", activeClasses: 5, pass: "1234" },
+      "6": { name: "دبیرستان نمونه دولتی حکمت", manager: "مهدی احمدی", studentsCount: 310, type: "دولتی", region: "شهری", gender: "پسرانه", activeClasses: 11, pass: "1234" },
+      "7": { name: "دبستان حضرت رقیه", manager: "فاطمه نوری", studentsCount: 190, type: "دولتی", region: "شهری", gender: "دخترانه", activeClasses: 7, pass: "1234" },
+      "8": { name: "دبیرستان اندیشه عشایری", manager: "صادق حیدری", studentsCount: 60, type: "دولتی", region: "عشایری", gender: "مختلط", activeClasses: 3, pass: "1234" },
+      "9": { name: "دبستان غیردولتی مهر تابان", manager: "نرگس صادقی", studentsCount: 150, type: "غیر دولتی", region: "شهری", gender: "دخترانه", activeClasses: 6, pass: "1234" },
+      "10": { name: "هنرستان کارودانش خوارزمی", manager: "حسن رضایی", studentsCount: 230, type: "دولتی", region: "شهری", gender: "پسرانه", activeClasses: 8, pass: "1234" }
     },
-    admin: { user: "admin", pass: "admin123" },
+    admin: { user: "123", pass: "123" },
     items: [
-      { id: 1, schoolCode: "1001", type: "مانیتور", status: "سالم", source: "خرید از سرانه مدرسه", history: [] },
-      { id: 2, schoolCode: "1001", type: "ویدیو پروژکتور", status: "نیازمند تعمیر", source: "نوسازی مدارس", history: ["علت خرابی: نوسان برق"] }
+      { id: 101, assetCode: "AM-1001", schoolCode: "1", type: "مانیتور", status: "سالم", source: "خرید از سرانه مدرسه", history: [] },
+      { id: 102, assetCode: "AM-1002", schoolCode: "1", type: "مانیتور", status: "نیازمند تعمیر", source: "نوسازی مدارس", history: ["علت خرابی: نوسان برق"] },
+      { id: 103, assetCode: "AM-1003", schoolCode: "1", type: "ویدیو پروژکتور", status: "سالم", source: "اهدا توسط خیرین", history: [] },
+      { id: 104, assetCode: "AM-1004", schoolCode: "2", type: "لپ‌تاپ", status: "سالم", source: "خرید از سرانه مدرسه", history: [] }
     ],
-    notifications: [
-      // { id, targetRole: 'school'|'admin', schoolCode, type: 'ALLOCATED'|'RETURN_TO_ADMIN', itemData }
-    ]
+    notifications: []
   };
 
-  // --- ENCRYPTION STORAGE LOGIC ---
   function getDB() {
-    const cipherText = localStorage.getItem("APP_DB");
-    if (!cipherText) {
-      saveDB(initialData);
-      return initialData;
-    }
+    const cipherText = localStorage.getItem("APP_DB_V2");
+    if (!cipherText) { saveDB(initialData); return initialData; }
     try {
       const bytes = CryptoJS.AES.decrypt(cipherText, SECRET_KEY);
-      const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-      return decryptedData;
-    } catch (e) {
-      console.error("خطا در رمزگشایی داده‌ها. بازنشانی به داده اولیه.");
-      return initialData;
-    }
+      return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+    } catch (e) { return initialData; }
   }
 
   function saveDB(data) {
     const cipherText = CryptoJS.AES.encrypt(JSON.stringify(data), SECRET_KEY).toString();
-    localStorage.setItem("APP_DB", cipherText);
+    localStorage.setItem("APP_DB_V2", cipherText);
   }
 
-  // --- APP STATE ---
-  let currentUser = null; // { role: 'school'|'admin', code: '1001' }
+  let currentUser = null;
 
   function toggleLoginInputs() {
     const role = document.getElementById('login-role').value;
-    document.getElementById('lbl-username').innerText = role === 'school' ? 'کد مدرسه:' : 'نام کاربری امین اموال:';
+    document.getElementById('lbl-username').innerText = role === 'school' ? 'کد مدرسه (۱ تا ۱۰):' : 'نام کاربری امین اموال:';
   }
 
-  // Login Form
+  // LOGIN
   document.getElementById('form-login').addEventListener('submit', function(e) {
     e.preventDefault();
     const db = getDB();
@@ -320,54 +541,60 @@
 
     if (role === 'school') {
       if (db.schools[user] && db.schools[user].pass === pass) {
-        currentUser = { role: 'school', code: user, name: db.schools[user].name };
+        currentUser = { role: 'school', code: user, ...db.schools[user] };
         loadSchoolDashboard();
-      } else {
-        alert("کد مدرسه یا رمز عبور اشتباه است (پیش‌فرض کد 1001 و رمز 1234)");
-      }
+      } else { alert("کد مدرسه یا رمز عبور اشتباه است."); }
     } else {
       if (db.admin.user === user && db.admin.pass === pass) {
         currentUser = { role: 'admin' };
         loadAdminDashboard();
-      } else {
-        alert("نام کاربری یا رمز امین اموال اشتباه است (پیش‌فرض admin و رمز admin123)");
-      }
+      } else { alert("نام کاربری یا رمز امین اموال اشتباه است."); }
     }
   });
 
   function logout() {
     currentUser = null;
+    document.getElementById('header-user-info').innerHTML = '';
     document.getElementById('view-school').classList.add('hidden');
     document.getElementById('view-admin').classList.add('hidden');
     document.getElementById('view-login').classList.remove('hidden');
   }
 
-  // --- SCHOOL DASHBOARD ---
+  // SCHOOL DASHBOARD RENDER
   function loadSchoolDashboard() {
     document.getElementById('view-login').classList.add('hidden');
     document.getElementById('view-school').classList.remove('hidden');
-    document.getElementById('school-title').innerText = currentUser.name;
-    document.getElementById('school-code-display').innerText = currentUser.code;
+    document.getElementById('header-user-info').innerHTML = `<button onclick="logout()" class="btn btn-outline" style="color:white; border-color:white; font-size:0.75rem;">خروج از حساب</button>`;
+
+    document.getElementById('sc-identity-name').innerText = `${currentUser.name} (کد: ${currentUser.code})`;
+    document.getElementById('sc-identity-manager').innerText = `مدیر: ${currentUser.manager}`;
+    
+    document.getElementById('sc-identity-tags').innerHTML = `
+      <span class="id-tag">👥 ${currentUser.studentsCount} دانش‌آموز</span>
+      <span class="id-tag">🏫 ${currentUser.type}</span>
+      <span class="id-tag">📍 ${currentUser.region}</span>
+      <span class="id-tag">👫 ${currentUser.gender}</span>
+      <span class="id-tag">🚪 ${currentUser.activeClasses} کلاس فعال</span>
+    `;
 
     renderSchoolNotifications();
-    renderSchoolItems();
+    renderGroupedSchoolItems();
   }
 
   function renderSchoolNotifications() {
     const db = getDB();
     const container = document.getElementById('school-notifications');
     container.innerHTML = '';
-
     const myNotifs = db.notifications.filter(n => n.targetRole === 'school' && n.schoolCode === currentUser.code);
     
     myNotifs.forEach(n => {
       const div = document.createElement('div');
       div.className = 'notification';
       div.innerHTML = `
-        <strong>اعلان اداره:</strong> کالای <b>${n.itemData.type}</b> به مدرسه شما تخصیص یافته است.
+        <strong>تخصیص جدید از اداره:</strong> کالای <b>${n.itemData.type}</b> با کد اموال <span class="asset-code">${n.itemData.assetCode}</span> برای شما فرستاده شده است.
         <div class="btn-group" style="margin-top:6px;">
-          <button onclick="acceptAdminItem(${n.id})" class="btn btn-success" style="padding:4px 8px; font-size:0.75rem;">تأیید و دریافت</button>
-          <button onclick="rejectNotification(${n.id})" class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;">رد تخصیص</button>
+          <button onclick="acceptAdminItem(${n.id})" class="btn btn-success" style="padding:4px 8px; font-size:0.75rem;">تأیید و افزودن به اموال</button>
+          <button onclick="rejectNotification(${n.id})" class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;">رد</button>
         </div>
       `;
       container.appendChild(div);
@@ -381,6 +608,7 @@
 
     db.items.push({
       id: Date.now(),
+      assetCode: notif.itemData.assetCode,
       schoolCode: currentUser.code,
       type: notif.itemData.type,
       status: "سالم",
@@ -401,67 +629,293 @@
     else loadAdminDashboard();
   }
 
-  function renderSchoolItems() {
-    const db = getDB();
-    const container = document.getElementById('school-items-list');
+  // GROUPED ITEMS RENDER FUNCTION
+  function renderGroupedItems(itemsList, targetContainerId, showControls = false) {
+    const container = document.getElementById(targetContainerId);
     container.innerHTML = '';
 
-    const myItems = db.items.filter(i => i.schoolCode === currentUser.code);
-
-    if (myItems.length === 0) {
-      container.innerHTML = '<p style="font-size:0.8rem; color:#64748b;">هیچ کالایی ثبت نشده است.</p>';
+    if (itemsList.length === 0) {
+      container.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted);">هیچ کالایی یافت نشد.</p>';
       return;
     }
 
-    myItems.forEach(item => {
-      const isHealthy = item.status === 'سالم';
-      const badgeClass = isHealthy ? 'badge-healthy' : 'badge-repair';
+    // Group items by 'type'
+    const grouped = {};
+    itemsList.forEach(item => {
+      if (!grouped[item.type]) grouped[item.type] = [];
+      grouped[item.type].push(item);
+    });
 
+    Object.keys(grouped).forEach(type => {
+      const groupDiv = document.createElement('div');
+      groupDiv.className = 'category-group';
+      
+      let html = `
+        <div class="category-header">
+          <span>📦 ${type} ها</span>
+          <span style="font-size:0.75rem; color:var(--text-muted);">تعداد: ${grouped[type].length}</span>
+        </div>
+      `;
+
+      grouped[type].forEach(item => {
+        const badgeClass = item.status === 'سالم' ? 'badge-healthy' : 'badge-repair';
+        html += `
+          <div class="item-card-row">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <span class="asset-code">${item.assetCode}</span>
+                <strong style="margin-right:6px; font-size:0.85rem;">${item.type}</strong>
+              </div>
+              <span class="badge ${badgeClass}">${item.status}</span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">
+              منبع: ${item.source}
+              ${item.history.length > 0 ? `<br>سوابق: ${item.history[item.history.length - 1]}` : ''}
+            </div>
+            ${showControls ? `
+              <div class="btn-group" style="margin-top:8px;">
+                <button onclick="openStatusModal(${item.id}, '${item.status}')" class="btn btn-outline" style="padding:3px 8px; font-size:0.72rem;">تغییر وضعیت</button>
+                <button onclick="openDeleteModal(${item.id})" class="btn btn-outline" style="padding:3px 8px; font-size:0.72rem; color:var(--danger);">حذف / تحویل</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+
+      groupDiv.innerHTML = html;
+      container.appendChild(groupDiv);
+    });
+  }
+
+  function renderGroupedSchoolItems() {
+    const db = getDB();
+    const myItems = db.items.filter(i => i.schoolCode === currentUser.code);
+    renderGroupedItems(myItems, 'school-items-grouped', true);
+  }
+
+  // EXCEL EXPORTS
+  function downloadCSV(csvContent, fileName) {
+    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function exportSchoolExcel() {
+    const db = getDB();
+    const myItems = db.items.filter(i => i.schoolCode === currentUser.code);
+    let csv = "کد اموال,نوع کالا,وضعیت سلامت,منبع تامین\n";
+    myItems.forEach(i => { csv += `"${i.assetCode}","${i.type}","${i.status}","${i.source}"\n`; });
+    downloadCSV(csv, `اموال_${currentUser.name}.csv`);
+  }
+
+  function exportAllAdminExcel() {
+    const db = getDB();
+    let csv = "کد مدرسه,نام مدرسه,نام مدیر,کد اموال اختصاصی,نوع کالا,وضعیت,منبع تامین\n";
+    db.items.forEach(i => {
+      const sc = db.schools[i.schoolCode] || {};
+      csv += `"${i.schoolCode}","${sc.name || ''}","${sc.manager || ''}","${i.assetCode}","${i.type}","${i.status}","${i.source}"\n`;
+    });
+    downloadCSV(csv, `گزارش_جامع_اموال_منطقه.csv`);
+  }
+
+  // ADMIN DASHBOARD
+  function loadAdminDashboard() {
+    document.getElementById('view-login').classList.add('hidden');
+    document.getElementById('view-admin').classList.remove('hidden');
+    document.getElementById('header-user-info').innerHTML = `<button onclick="logout()" class="btn btn-outline" style="color:white; border-color:white; font-size:0.75rem;">خروج از حساب</button>`;
+
+    renderAdminNotifications();
+    renderAdminSchools();
+    populateSearchableDropdown();
+  }
+
+  function renderAdminNotifications() {
+    const db = getDB();
+    const container = document.getElementById('admin-notifications');
+    container.innerHTML = '';
+    const adminNotifs = db.notifications.filter(n => n.targetRole === 'admin');
+
+    adminNotifs.forEach(n => {
       const div = document.createElement('div');
-      div.className = 'item-row';
+      div.className = 'notification';
       div.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <strong>${item.type}</strong>
-          <span class="badge ${badgeClass}">${item.status}</span>
-        </div>
-        <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">
-          مبدأ: ${item.source}
-          ${item.history.length > 0 ? `<br>تاریخچه: ${item.history[item.history.length - 1]}` : ''}
-        </div>
-        <div class="btn-group" style="margin-top:8px;">
-          <button onclick="openStatusModal(${item.id}, '${item.status}')" class="btn btn-outline" style="padding:4px; font-size:0.75rem;">تغییر وضعیت سلامت</button>
-          <button onclick="openDeleteModal(${item.id})" class="btn btn-outline" style="padding:4px; font-size:0.75rem; color:var(--danger); border-color:#fca5a5;">حذف</button>
+        <strong>درخواست تحویل از ${n.schoolName}:</strong> قصد تحویل کالای <b>${n.itemData.type}</b> (کد اموال: ${n.itemData.assetCode}) به اداره را دارد.
+        <div class="btn-group" style="margin-top:6px;">
+          <button onclick="acceptReturnedItem(${n.id}, ${n.itemData.id})" class="btn btn-success" style="padding:4px 8px; font-size:0.75rem;">تأیید تحویل و حذف از اموال مدرسه</button>
+          <button onclick="rejectNotification(${n.id})" class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;">رد درخواست</button>
         </div>
       `;
       container.appendChild(div);
     });
   }
 
-  // --- MODALS & FORM ACTIONS ---
+  function acceptReturnedItem(notifId, itemId) {
+    const db = getDB();
+    db.items = db.items.filter(i => i.id !== itemId);
+    db.notifications = db.notifications.filter(n => n.id !== notifId);
+    saveDB(db);
+    loadAdminDashboard();
+  }
+
+  function renderAdminSchools() {
+    const db = getDB();
+    const container = document.getElementById('admin-schools-list');
+    container.innerHTML = '';
+
+    Object.keys(db.schools).forEach(code => {
+      const sc = db.schools[code];
+      const items = db.items.filter(i => i.schoolCode === code);
+
+      const div = document.createElement('div');
+      div.className = 'clickable-school';
+      div.onclick = () => openAdminSchoolDetails(code);
+
+      div.innerHTML = `
+        <div style="font-weight:700; color:var(--primary); font-size:0.95rem;">${sc.name}</div>
+        <div style="font-size:0.8rem; color:var(--accent); margin-bottom:4px;">مدیر: ${sc.manager}</div>
+        <div class="identity-tags">
+          <span class="id-tag">کد: ${code}</span>
+          <span class="id-tag">👥 ${sc.studentsCount} دانش‌آموز</span>
+          <span class="id-tag">${sc.type}</span>
+          <span class="id-tag">${sc.region}</span>
+          <span class="id-tag">کل تجهیزات: ${items.length}</span>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  // Populate Select2 Searchable Dropdown for Admin Allocation
+  function populateSearchableDropdown() {
+    const db = getDB();
+    const select = $('#admin-target-school-select');
+    select.empty();
+
+    Object.keys(db.schools).forEach(code => {
+      const sc = db.schools[code];
+      select.append(new Option(`${sc.name} (کد: ${code} - مدیر: ${sc.manager})`, code, false, false));
+    });
+
+    // Initialize Select2
+    select.select2({
+      dropdownParent: $('#modal-admin-add')
+    });
+  }
+
+  function openAdminSchoolDetails(code) {
+    const db = getDB();
+    const sc = db.schools[code];
+    const items = db.items.filter(i => i.schoolCode === code);
+
+    document.getElementById('admin-modal-school-title').innerText = `اموال مدرسه: ${sc.name}`;
+    document.getElementById('admin-modal-school-identity').innerHTML = `
+      <div style="font-size:0.85rem; color:var(--accent); font-weight:bold;">مدیر: ${sc.manager}</div>
+      <div class="identity-tags" style="margin-top:6px;">
+        <span class="id-tag">کد: ${code}</span>
+        <span class="id-tag">👥 ${sc.studentsCount} دانش‌آموز</span>
+        <span class="id-tag">${sc.type} - ${sc.region}</span>
+        <span class="id-tag">${sc.gender} - ${sc.activeClasses} کلاس</span>
+      </div>
+    `;
+
+    renderGroupedItems(items, 'admin-modal-school-items-grouped', false);
+    document.getElementById('modal-admin-view-school').classList.remove('hidden');
+  }
+
+  // MODAL ACTIONS
   function openAddModal() { document.getElementById('modal-add').classList.remove('hidden'); }
+  function openAdminAddModal() { document.getElementById('modal-admin-add').classList.remove('hidden'); }
+  function openAddSchoolModal() { document.getElementById('modal-add-school').classList.remove('hidden'); }
   function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); }
 
+  // Submit New Item by School
   document.getElementById('form-add-item').addEventListener('submit', function(e) {
     e.preventDefault();
     const db = getDB();
-    const type = document.getElementById('add-type').value;
-    const source = document.getElementById('add-source').value;
+    const assetCode = document.getElementById('add-asset-code').value.trim();
+
+    // Check Unique Asset Code
+    if(db.items.some(i => i.assetCode === assetCode)) {
+      alert("این کد اموال قبلاً در سامانه ثبت شده است! لطفاً کد دیگری وارد کنید.");
+      return;
+    }
 
     db.items.push({
       id: Date.now(),
+      assetCode: assetCode,
       schoolCode: currentUser.code,
-      type: type,
+      type: document.getElementById('add-type').value,
       status: "سالم",
-      source: source,
-      history: ["ثبت اولیه کالا توسط مدیر"]
+      source: document.getElementById('add-source').value,
+      history: ["ثبت اولیه توسط مدیر"]
     });
 
     saveDB(db);
     closeModals();
-    renderSchoolItems();
+    renderGroupedSchoolItems();
   });
 
-  // Change Status Logic
+  // Submit Admin Allocation
+  document.getElementById('form-admin-add').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const db = getDB();
+    const schoolCode = $('#admin-target-school-select').val();
+    const assetCode = document.getElementById('admin-add-asset-code').value.trim();
+
+    if(db.items.some(i => i.assetCode === assetCode)) {
+      alert("این کد اموال قبلاً ثبت شده است!");
+      return;
+    }
+
+    db.notifications.push({
+      id: Date.now(),
+      targetRole: 'school',
+      schoolCode: schoolCode,
+      type: 'ALLOCATED',
+      itemData: { 
+        assetCode: assetCode,
+        type: document.getElementById('admin-add-type').value 
+      }
+    });
+
+    saveDB(db);
+    closeModals();
+    alert("اعلان تخصیص کالا با موفقیت به مدرسه ارسال شد.");
+  });
+
+  // Register New School Form
+  document.getElementById('form-add-school').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const db = getDB();
+    const code = document.getElementById('ns-code').value.trim();
+
+    if(db.schools[code]) {
+      alert("مدرسه‌ای با این کد قبلاً ثبت شده است!");
+      return;
+    }
+
+    db.schools[code] = {
+      name: document.getElementById('ns-name').value.trim(),
+      manager: document.getElementById('ns-manager').value.trim(),
+      studentsCount: parseInt(document.getElementById('ns-students').value),
+      type: document.getElementById('ns-type').value,
+      region: document.getElementById('ns-region').value,
+      gender: document.getElementById('ns-gender').value,
+      activeClasses: parseInt(document.getElementById('ns-classes').value),
+      pass: document.getElementById('ns-pass').value.trim()
+    };
+
+    saveDB(db);
+    closeModals();
+    loadAdminDashboard();
+    alert("مدرسه جدید با موفقیت اضافه شد.");
+  });
+
   function openStatusModal(itemId, currentStatus) {
     document.getElementById('status-item-id').value = itemId;
     document.getElementById('modal-status').classList.remove('hidden');
@@ -479,41 +933,27 @@
     }
   }
 
-  function toggleCustomReason() {
-    const reason = document.getElementById('status-break-reason').value;
-    if (reason === 'other') document.getElementById('status-break-custom').classList.remove('hidden');
-    else document.getElementById('status-break-custom').classList.add('hidden');
-  }
-
   document.getElementById('form-change-status').addEventListener('submit', function(e) {
     e.preventDefault();
     const db = getDB();
     const itemId = parseInt(document.getElementById('status-item-id').value);
     const newStatus = document.getElementById('status-new-val').value;
-    
     const item = db.items.find(i => i.id === itemId);
+
     if (!item) return;
 
-    let logNote = "";
-    if (newStatus === 'نیازمند تعمیر') {
-      const reasonSelect = document.getElementById('status-break-reason').value;
-      const customReason = document.getElementById('status-break-custom').value;
-      const finalReason = reasonSelect === 'other' ? customReason : reasonSelect;
-      logNote = `علت خرابی: ${finalReason}`;
-    } else {
-      const method = document.getElementById('status-repair-method').value;
-      logNote = `نحوه تعمیر: ${method}`;
-    }
+    let logNote = newStatus === 'نیازمند تعمیر' 
+      ? `علت خرابی: ${document.getElementById('status-break-reason').value}`
+      : `نحوه تعمیر: ${document.getElementById('status-repair-method').value}`;
 
     item.status = newStatus;
     item.history.push(logNote);
 
     saveDB(db);
     closeModals();
-    renderSchoolItems();
+    renderGroupedSchoolItems();
   });
 
-  // Delete Logic
   function openDeleteModal(itemId) {
     document.getElementById('delete-item-id').value = itemId;
     document.getElementById('modal-delete').classList.remove('hidden');
@@ -527,7 +967,6 @@
 
     if (reason === 'تحویل اداره') {
       const item = db.items.find(i => i.id === itemId);
-      // Send notification to Admin
       db.notifications.push({
         id: Date.now(),
         targetRole: 'admin',
@@ -536,105 +975,15 @@
         type: 'RETURN_TO_ADMIN',
         itemData: item
       });
-      // Temporarily mark as pending
-      item.status = "در انتظار تأیید تحویل اداره";
-      alert("درخواست تحویل به اداره برای امین اموال ارسال شد.");
+      alert("درخواست تحویل به امین اموال ارسال گردید.");
     } else {
-      // Direct delete
       db.items = db.items.filter(i => i.id !== itemId);
     }
 
     saveDB(db);
     closeModals();
-    renderSchoolItems();
+    renderGroupedSchoolItems();
   });
-
-  // --- ADMIN DASHBOARD LOGIC ---
-  function loadAdminDashboard() {
-    document.getElementById('view-login').classList.add('hidden');
-    document.getElementById('view-admin').classList.remove('hidden');
-
-    renderAdminNotifications();
-    renderAdminSchools();
-  }
-
-  function renderAdminNotifications() {
-    const db = getDB();
-    const container = document.getElementById('admin-notifications');
-    container.innerHTML = '';
-
-    const adminNotifs = db.notifications.filter(n => n.targetRole === 'admin');
-
-    adminNotifs.forEach(n => {
-      const div = document.createElement('div');
-      div.className = 'notification';
-      div.innerHTML = `
-        <strong>اعلان مدرسه ${n.schoolName}:</strong> قصد تحویل کالای <b>${n.itemData.type}</b> به اداره را دارد.
-        <div class="btn-group" style="margin-top:6px;">
-          <button onclick="acceptReturnedItem(${n.id}, ${n.itemData.id})" class="btn btn-success" style="padding:4px 8px; font-size:0.75rem;">تأیید تحویل و حذف از اموال مدرسه</button>
-          <button onclick="rejectNotification(${n.id})" class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;">رد درخواست</button>
-        </div>
-      `;
-      container.appendChild(div);
-    });
-  }
-
-  function acceptReturnedItem(notifId, itemId) {
-    const db = getDB();
-    // Delete item permanently from school
-    db.items = db.items.filter(i => i.id !== itemId);
-    db.notifications = db.notifications.filter(n => n.id !== notifId);
-    saveDB(db);
-    loadAdminDashboard();
-  }
-
-  function openAdminAddModal() { document.getElementById('modal-admin-add').classList.remove('hidden'); }
-
-  document.getElementById('form-admin-add').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const db = getDB();
-    const schoolCode = document.getElementById('admin-target-school').value.trim();
-    const type = document.getElementById('admin-add-type').value;
-
-    if (!db.schools[schoolCode]) {
-      alert("کد مدرسه مورد نظر در سامانه یافت نشد!");
-      return;
-    }
-
-    db.notifications.push({
-      id: Date.now(),
-      targetRole: 'school',
-      schoolCode: schoolCode,
-      type: 'ALLOCATED',
-      itemData: { type }
-    });
-
-    saveDB(db);
-    closeModals();
-    alert("اعلان تخصیص کالا برای مدیر مدرسه ارسال شد.");
-  });
-
-  function renderAdminSchools() {
-    const db = getDB();
-    const container = document.getElementById('admin-schools-list');
-    container.innerHTML = '';
-
-    Object.keys(db.schools).forEach(code => {
-      const school = db.schools[code];
-      const schoolItems = db.items.filter(i => i.schoolCode === code);
-
-      const div = document.createElement('div');
-      div.className = 'item-row';
-      div.innerHTML = `
-        <strong>${school.name} (کد: ${code})</strong>
-        <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">
-          تعداد کل تجهیزات: ${schoolItems.length} عدد
-          <br>تجهیزات سالم: ${schoolItems.filter(i => i.status === 'سالم').length} | نیازمند تعمیر: ${schoolItems.filter(i => i.status === 'نیازمند تعمیر').length}
-        </div>
-      `;
-      container.appendChild(div);
-    });
-  }
 </script>
 </body>
 </html>
